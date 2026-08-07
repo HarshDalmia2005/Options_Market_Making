@@ -1,0 +1,1635 @@
+HAL Id: hal-02987880
+https://hal.science/hal-02987880v1
+Preprint submitted on 4 Nov 2020
+HAL is a multi-disciplinary open access archive
+for the deposit and dissemination of scientific re-
+search documents, whether they are published or not.
+The documents may come from teaching and research
+institutions in France or abroad, or from public or pri-
+vate research centers.
+L’archive ouverte pluridisciplinaire HAL, est des-
+tinée au dépôt et à la diffusion de documents scien-
+tifiques de niveau recherche, publiés ou non, émanant
+des établissements d’enseignement et de recherche
+français ou étrangers, des laboratoires publics ou
+privés.
+HAL Authorization
+Algorithmic market making for options
+Bastien Baldacci, Philippe Bergault, Olivier Guéant
+To cite this version:
+Bastien Baldacci, Philippe Bergault, Olivier Guéant. Algorithmic market making for options. 2020. ⟨hal-
+02987880⟩
+Algorithmic market making for options*
+Bastien Baldacci
+Philippe Bergault
+Olivier Guéant
+Abstract
+In this article, we tackle the problem of a market maker in charge of a book of options on a single liquid
+underlying asset. By using an approximation of the portfolio in terms of its vega, we show that the seemingly
+high-dimensional stochastic optimal control problem of an option market maker is in fact tractable. More
+precisely, when volatility is modeled using a classical stochastic volatility model  e.g. the Heston model
+ the problem faced by an option market maker is characterized by a low-dimensional functional equation
+that can be solved numerically using a Euler scheme along with interpolation techniques, even for large
+portfolios. In order to illustrate our ndings, numerical examples are provided.
+Key words: Market making, Algorithmic trading, Options, Stochastic optimal control.
+1
+Introduction
+The electronication of nancial markets started in the seventies with stock exchanges and now aects each
+and every asset class. For asset classes that are usually traded in a centralized way (stocks, futures, etc.),
+exchanges and other all-to-all trading platforms  based or not based on limit order books  are now fully
+automated. For assets that are still traded over the counter (OTC), electronication occurs through the in-
+troduction of new platforms, for instance single- and multi-dealer-to-client platforms.
+This electronication is associated with a trend towards the automation of the trading process for many play-
+ers of the nancial industry: brokers, banks, but also systematic asset managers who often develop their own
+execution algorithms. For assets traded in centralized markets, trading automation is nowadays massive. For
+instance, in the cash equity world, a vast majority of the execution is now carried out using algorithms. For
+assets traded in dealer markets, the automation of the market making process has been at the agenda for a few
+years and more and more banks are developing market making algorithms for various asset classes (currencies,
+bonds, etc.).
+In the academic literature, many market making models have been proposed since the eighties. In the early
+literature on market making, the two main references are the paper of Ho and Stoll [19] and the paper of
+Grossman and Miller [10].
+Ho and Stoll introduced indeed a very relevant framework to tackle the main
+problem faced by market makers: inventory management. Grossman and Miller, who were more interested
+in capturing the essence of liquidity, proposed a very simple model with 3 periods that encompassed both
+*Bastien Baldacci gratefully acknowledges the support of the ERC Grant 679836 Staqamof. Olivier Guéant thanks the Research
+Initiative Modélisation des marchés actions, obligations et dérivés nanced by HSBC France under the aegis of the Europlace
+Institute of Finance for their support regarding an early version of the paper (entitled Algorithmic market making: the case
+of equity derivatives).
+The authors would like to thank Lorenzo Bergomi (Société Générale), Bruno Bouchard (Université
+Paris-Dauphine), Rama Cont (Oxford University), Renaud Delloye (HSBC), Thomas de Garidel (HSBC), Nicolas Grandchamp
+des Raux (HSBC), Iuliia Manziuk (Université Paris 1 Panthéon-Sorbonne), Ben Nasatyr (Citi), Jiang Pu (Institut Europlace
+de Finance), and Mathieu Rosenbaum (Ecole Polytechnique) for the discussions they had on the topic.
+The readers should
+nevertheless be aware that the views, thoughts, and opinions expressed in the text belong solely to the authors.
+École Polytechnique, CMAP, Route de Saclay, 91128 Palaiseau Cedex, France, bastien.baldacci@polytechnique.edu.
+Université Paris 1 Panthéon-Sorbonne, Centre d'Economie de la Sorbonne, 106 Boulevard de l'Hôpital, 75642 Paris Cedex 13,
+France, philippe.bergault@etu.univ-paris1.fr.
+Université Paris 1 Panthéon-Sorbonne, Centre d'Economie de la Sorbonne, 106 Boulevard de l'Hôpital, 75642 Paris Cedex 13,
+France, olivier.gueant@univ-paris1.fr. Corresponding author.
+1
+market makers and nal customers, enabled to understand what happens at equilibrium, and contributed to
+the important literature on the price formation process. If the latter paper belongs to a strand of literature
+that is extremely important to go beyond the simple Walrasian view of markets, it is of little help to build
+market making algorithms. The former paper however, after more than 25 years, has paved the way to a
+recent mathematical literature on algorithmic market making.
+The seminal reference of the new literature on market making is the paper of Avellaneda and Stoikov [1] who
+revived the dynamic approach proposed by Ho and Stoll. They indeed showed how the quoting and inventory
+management problems of market makers could be addressed using the tools of stochastic optimal control. Since
+then, many models have been proposed, most of them to tackle the same problem of single-asset market mak-
+ing as that of Avellaneda and Stoikov. For instance, Guéant, Lehalle, and Fernandez-Tapia provided in [14] a
+rigourous analysis of the Avellaneda-Stoikov stochastic optimal control problem and proved that the problem
+could be simplied into a system of linear ordinary dierential equations (ODE) in the case of exponential
+intensity functions. Cartea, Jaimungal, and coauthors contributed a lot to the literature and added many
+features to the initial models: alpha signals, ambiguity aversion, etc. (see [5, 6, 7]). They also considered
+a dierent objective function: a risk-adjusted expectation instead of a Von Neumann-Morgenstern expected
+utility.
+The models proposed in the above papers all share the same characteristics: (i) they are agnostic with respect
+to the market structure but are in fact more adapted to OTC markets,1 (ii) they only deal with single-asset
+market making, and (iii) they do not deal with the market making of options.
+In fact, models have been specically developed by Guilbaud and Pham (see [16, 17]) for assets traded through
+limit order books (e.g. most stocks) and for assets traded on platforms with a pro-rata microstructure (e.g.
+some currency pairs). Interestingly, these models enable the use of aggressive orders by market makers, which
+is  surprisingly  a standard behavior on equity markets (see [22]).
+As far as multi-asset market making is concerned, models have been developed recently to account for the
+correlation structure between asset price changes. Guéant extended to a multi-asset framework both mod-
+els à la Avellaneda-Stoikov and models à la Cartea-Jaimungal (see [11], [12], and [13]) and showed that the
+problem boils down, for general intensity functions, to solving a system of (a priori nonlinear) ODEs. The
+associated question of the numerical methods to approximate the solution of the equations characterizing the
+optimal quotes of a multi-asset market maker is addressed in [2] using a factorial approach and in [15] using
+reinforcement learning, both with applications to corporate bond markets.
+Finally, as far as asset classes are concerned, there have been few attempts to address market making prob-
+lems outside of the cash world. Market making models for derivative contracts are indeed intrinsically more
+complicated because they must account for the strategies on both the market for the underlying asset and the
+market for the derivatives, and usually for numerous contracts (e.g. options for lots of strikes and maturities).
+Option market making is only addressed in a paper by El Aoud and Abergel (see [8]) and in a paper by Stoikov
+and Sa§lam [23]. In the former, the authors consider a single-option market driven by a stochastic volatility
+model and assume that the position is always ∆-hedged. They provide optimal bid and ask quotes for the
+option and focus on the risk of model misspecication. In the latter, the authors consider three dierent
+settings, but all with only one option: (i) a market maker in a complete market where continuous trading in
+the perfectly liquid underlying stock is allowed, (ii) a market maker who may not trade continuously in the
+underlying stock, but rather sets bid and ask quotes in the option and the stock, and (iii) a market maker in
+an incomplete market with residual risks due to stochastic volatility and overnight jumps.
+In this paper, we consider the case of a market maker in charge of a book of options whose prices are driven by
+a stochastic volatility model. We assume that trading in continuous time can be carried out in the underlying
+asset so that the residual risk is only that of the vega associated with the inventory. Using a constant-vega
+approximation, we show that the problem of an option market maker boils down to solving a low-dimensional
+functional equation of the Hamilton-Jacobi-Bellman type that can be tackled numerically using a simple Euler
+1The models are also suited for assets traded in limit order books if the bid-ask spread to tick size ratio is large.
+2
+scheme along with interpolation techniques. In particular, in spite of the large number of assets, the market
+making problem is tractable.
+In Section 1, we describe the model and present the optimization problem of the option market maker. In
+Section 2, we show how that problem can be simplied under the constant-vega approximation. In particular,
+we show that solving the high-dimensional stochastic optimal control problem of the market maker boils down
+to solving a low-dimensional functional equation. In Section 3, we consider the example of a book of options
+with several strikes and maturities and provide numerical results obtained through interpolation techniques
+and an explicit Euler scheme.
+2
+Description of the problem
+We consider a probability space (Ω, F, P
+
+with a ltration (Ft)t∈R+ satisfying the usual conditions. Throughout
+the paper, we assume that all stochastic processes are dened on
+ Ω, F, (Ft)t∈R+, P
+
+.
+2.1
+The market
+We consider an asset whose price dynamics is described by a one-factor stochastic volatility model of the form
+
+dSt = µStdt + √νtStdW S
+t
+dνt = aP(t, νt)dt + ξ√νtdW ν
+t ,
+where µ ∈R, ξ ∈R∗
++, (W S
+t , W ν
+t )t∈R+ is a couple of Brownian motions with quadratic covariation given by
+ρ = d⟨W S,W ν⟩
+dt
+∈(−1, 1), and aP is such that the processes are well dened (in particular, we assume that the
+process (νt)t∈R+ stays positive almost surely).
+Remark 1. A classical example for the function aP is that of the Heston model (see [18]), i.e. aP : (t, ν) 7→
+κP(θP −ν) where κP, θP ∈R∗
++ satisfy the Feller condition 2κPθP > ξ2.
+Remark 2. For the sake of simplicity, we consider throughout this paper a one-factor model where the in-
+stantaneous variance is the main variable of interest. Similar results could be obtained with a one-factor model
+focused on forward variances, such as the classical one-factor Bergomi model (see [3, 4]). Moreover, it is
+noteworthy that our approach can easily be extended to two-factor stochastic volatility models such as the cele-
+brated two-factor Bergomi model (see [3, 4]), up to an increase  by 1  of the dimension of the equation to solve.
+Assuming interest rates are equal to 0, we introduce an equivalent risk-neutral/pricing probability measure2
+Q under which the price and volatility processes become
+(
+dSt = √νtStdc
+W S
+t
+dνt = aQ(t, νt)dt + ξ√νtdc
+W ν
+t ,
+where (c
+W S
+t , c
+W ν
+t )t∈R+ is another couple of Brownian motions, this time under Q, with quadratic covariation
+given by ρ = d⟨c
+W S,c
+W ν⟩
+dt
+∈(−1, 1), and where aQ is such that the processes are well dened.
+We consider N ≥1 European options written on the above asset (hereafter, the underlying asset). For each
+i ∈{1, . . . , N}, the maturity date of the i-th option is denoted by T i and we denote by (Oi
+t)t∈[0,T i] the price
+process associated with the i-th option.
+2For references, see for instance [9].
+3
+Remark 3. In applications, the options under consideration will always be call and/or put options. However,
+our setting enables to consider any European payo.
+In the above one-factor model, we know that for all i ∈{1, . . . , N}, and all t ∈[0, T i], Oi
+t = Oi(t, St, νt) where
+Oi is solution on [0, T i) × R2
++ of the following partial dierential equation (PDE):
+0
+=
+∂tOi(t, S, ν) + aQ(t, ν)∂νOi(t, S, ν)
++1
+2νS2∂2
+SSOi(t, S, ν) + ρξνS∂2
+νSOi(t, S, ν) + 1
+2ξ2ν∂2
+ννOi(t, S, ν).
+(1)
+Remark 4. Options prices are also characterized by a terminal condition corresponding to the payo. How-
+ever, we will only consider short-term optimization problems for which the time horizon is before the maturity
+of all the options under consideration. Therefore, we shall never use the nal condition associated with Eq. (1).
+2.2
+The optimization problem of the market maker
+We consider an option market maker in charge of providing bid and ask quotes for the N above options over the
+period [0, T] where T < mini∈{1,...,N}T i (see Remark 4). For all i ∈{1, . . . , N}, we denote by Oi
+t −δi,b
+t (z) and
+Oi
+t+δi,a
+t (z) the bid and ask prices (per contract) proposed by the market maker for a transaction corresponding
+to z contracts of the i-th option, where (δi
+t(.))t∈[0,T ] :=
+ δi,b
+t (.), δi,a
+t (.)
+
+t∈[0,T ] is F-predictable and bounded from
+below by a given constant δ∞.3 Hereafter, we denote by A the set of F-predictable R2N-valued maps that are
+bounded from below by δ∞, and, by abuse of language, we call these maps admissible control processes. The
+dynamics of the inventory process (qt)t∈[0,T ] := (q1
+t , . . . , qN
+t )′
+t∈[0,T ] of the market maker is given by
+dqi
+t :=
+Z
+R∗
++
+z
+ N i,b(dt, dz) −N i,a(dt, dz)
+
+, ∀i ∈{1, . . . , N},
+where, ∀i ∈{1, . . . , N}, N i,b(dt, dz) and N i,a(dt, dz) are two right-continuous R∗
++-marked point processes,
+with almost surely no simultaneous jumps,4 modelling the transactions of the i-th option on the bid and ask
+side, whose respective intensity processes (λi,b
+t (dz))t∈R+ and (λi,a
+t (dz))t∈R+ are given by
+λi,b
+t (dz) := Λi,b(δi,b
+t (z))1{qt−+zei∈Q}µi,b(dz)
+λi,a
+t (dz) := Λi,a(δi,a
+t (z))1{qt−−zei∈Q}µi,a(dz)
+with (ei)i∈{1,...,N} the canonical basis of RN, Q the set of authorized inventories5 for the market maker,
+and (µi,b, µi,a) a couple of probability measures on R∗
++ modelling the distributions of transaction sizes. For
+i ∈{1, . . . , N}, Λi,b and Λi,a are positive functions satisfying the following classical hypotheses (see [11, 12]
+for similar assumptions):
+ Λi,b and Λi,a are twice continuously dierentiable.
+ Λi,b and Λi,a are strictly decreasing, with Λi,b′ < 0 and Λi,a′ < 0.
+
+lim
+δ→+∞Λi,b(δ) =
+lim
+δ→+∞Λi,a(δ) = 0.
+ sup
+δ∈R
+Λi,b(δ)Λi,b′′(δ)
+ Λi,b′(δ)
+2
+< 2 and sup
+δ∈R
+Λi,a(δ)Λi,a′′(δ)
+ Λi,a′(δ)
+2
+< 2.
+The above conditions are suciently general to allow for the vast majority of relevant forms of intensities: the
+exponential intensities initially introduced in [1] and used in most of the literature, logistic intensities as in [2],
+or many SU Johnson intensities as in [15].
+In addition to quoting prices for the N options, the market maker can buy and sell the underlying asset. We
+assume that the market for that asset is liquid enough to ensure a perfect ∆-hedging.
+3In applications, we always choose δ∞negative enough so that this lower bound is never binding.
+4See Appendix A.3 for more details on the construction of those processes.
+5The frontier of this set denes the risk limits of the market maker.
+4
+Remark 5. In practice, for a portfolio that is not vega-hedged, it is usually suboptimal to perfectly ∆-hedge
+the portfolio because of the correlation between the spot process and the instantaneous variance process. Never-
+theless, we assume here for the sake of simplicity that ∆-hedging is carried out in continuous time. A study of
+the optimal position in the underlying asset and its consequence on our problem is carried out in Appendix A.1.
+In what follows, we denote by (∆t)t∈[0,T ] the ∆of the portfolio:
+∆t :=
+N
+X
+i=1
+∂SOi(t, St, νt)qi
+t for all t ∈[0, T].
+The resulting dynamics for the cash process (Xt)t∈[0,T ] of the market maker is:
+dXt :=
+N
+X
+i=1
+ Z
+R∗
++
+z
+
+δi,b
+t (z)N i,b(dt, dz) + δi,a
+t (z)N i,a(dt, dz)
+
+−Oi
+tdqi
+t
+
++ Std∆t + d
+
+∆, S
+
+t.
+We denote by (Vt)t∈[0,T ] the process for the Mark-to-Market (MtM) value of the market maker's portfolio
+(cash, shares, and options), i.e.,
+Vt := Xt −∆tSt +
+N
+X
+i=1
+qi
+tOi
+t.
+The dynamics of that process is given by
+dVt
+=
+dXt −Std∆t −∆tdSt −d
+
+∆, S
+
+t +
+N
+X
+i=1
+Oi
+tdqi
+t +
+N
+X
+i=1
+qi
+tdOi
+t
+=
+N
+X
+i=1
+ Z
+R∗
++
+z
+
+δi,b
+t (z)N i,b(dt, dz) + δi,a
+t (z)N i,a(dt, dz)
+
++ qi
+tdOi
+t
+!
+−∆tdSt
+=
+N
+X
+i=1
+ Z
+R∗
++
+z
+
+δi,a
+t (z)N i,a(dt, dz) + δi,b
+t (z)N i,b(dt, dz)
+
++qi
+t∂νOi(t, St, νt)
+ aP(t, νt) −aQ(t, νt)
+
+dt
++√νtξqi
+t∂νOi(t, St, νt)dW ν
+t
+!
+.
+For all i ∈{1, . . . , N}, the vega of the i-th option is dened as
+Vi
+t := ∂√νOi(t, St, νt) = 2√νt∂νOi(t, St, νt) for all t ∈[0, T].
+Therefore, we can rewrite the dynamics of the portfolio as
+dVt =
+N
+X
+i=1
+ Z
+R∗
++
+z
+
+δi,b
+t (z)N i,b
+t (dt, dz) + δi,a
+t (z)N i,a
+t
+(dt, dz)
+
++ qi
+tVi
+t
+aP(t, νt) −aQ(t, νt)
+2√νt
+dt + ξ
+2qi
+tVi
+tdW ν
+t
+!
+.
+Following the academic literature on market making, we can consider two objective functions.
+As in the
+initial Avellaneda and Stoikov setting [1] (see also [11, 12, 14]), we can consider the following expected utility
+objective function:
+sup
+δ∈A
+E
+
+−exp
+ −γVT
+
+,
+where γ > 0 is the riskaversion parameter of the market maker. Instead, as in [5, 6, 7], but also in [12], we
+can consider a riskadjusted expectation for the objective function, i.e.
+sup
+δ∈A
+E
+
+VT −γ
+2
+Z T
+0
+ N
+X
+i=1
+ξ
+2qi
+tVi
+t
+!2
+dt
+
+.
+5
+The second objective function in our case writes
+sup
+δ∈A
+E
+
+
+Z T
+0
+
+
+N
+X
+i=1
+
+
+
+X
+j=a,b
+Z
+R∗
++
+zδi,j
+t (z)Λi,j(δi,j
+t (z))1{qt−−ψ(j)zei∈Q}µi,j(dz)
+
+
++ qi
+tVi
+t
+aP(t, νt) −aQ(t, νt)
+2√νt
+
+
+
+dt −γξ2
+8
+Z T
+0
+ N
+X
+i=1
+qi
+tVi
+t
+!2
+dt
+
+,
+(2)
+where
+ψ(j) :=
+ +1 if j = a
+−1 if j = b.
+These two objective functions are close to one other in practice. Guéant showed in [12] that they give similar
+optimal quotes in practical examples. Furthermore, in many cases, the expected utility framework with expo-
+nential utility function can be reduced to the maximization of the expected PnL minus a quadratic penalty of
+the above form, up to a change in the intensity functions (see [20]).
+In what follows, we consider the second framework. Therefore, we dene the value function
+u :
+ t, S, ν, q
+
+∈[0, T] × R2
++ × Q 7→u
+ t, S, ν, q
+
+associated with (2) as
+u
+ t, S, ν, q
+
+=
+sup
+(δs)s∈[t,T ]∈At
+E(t,S,ν,q)
+
+
+Z T
+t
+N
+X
+i=1
+
+
+
+X
+j=a,b
+Z
+R∗
++
+zδi,j
+s (z)Λi,j(δi,j
+s (z))1{qs−−ψ(j)zei∈Q}µi,j(dz)
+
+
++ qi
+sVi
+s
+aP(s, νs) −aQ(s, νs)
+2√νs
+
+ds −γξ2
+8
+Z T
+t
+ N
+X
+i=1
+qi
+sVi
+s
+!2
+ds
+
+,
+where At is the set of admissible controls (F-predictable R2N-valued maps that are bounded from below by δ∞)
+dened on [t, T].
+2.3
+Assumptions and approximations
+The above stochastic optimal control problem can be addressed from a theoretical point of view using an
+approach similar to that of [12]. However, when it comes to approximating the optimal quotes a market maker
+should set for the N options, classic numerical methods are of no help because the value function u has N + 2
+variables (in addition to the time variable). In order to beat the curse of dimensionality we propose a method
+based on the following assumptions/approximations:
+Assumption 1. We approximate the vega of each option over [0, T] by its value at time t = 0, namely
+Vi
+t = Vi
+0 =: Vi ∈R, for all i ∈{1, . . . , N}.
+Assumption 2. We assume that the set of authorized inventories is associated with vega risk limits, i.e.
+Q =
+
+q ∈RN
+
+N
+X
+i=1
+qiVi ∈
+
+−V, V
+ 
+,
+where V ∈R∗
++ is the vega risk limit of the market maker.
+6
+The rst assumption is acceptable if T is not too large. This raises in fact the deep question of the reasonable
+value of T, as there is no natural choice for the horizon of the optimization problem. In practice, T has to
+be sucient large to allow for several transactions in many options and small enough for the constant-vega
+approximation to be relevant (and smaller than the maturities of the options). It is also noteworthy, although
+it is time-inconsistent, that one can use the output of the model (with the constant-vega approximation) over
+a short period of time and then run the model again with updated vegas. This is a classical practice in applied
+optimal control when the parameters are estimated online.6
+The second assumption states that risk limits are related to the only source of risk (as the portfolio is ∆-
+hedged). This is a natural assumption. The only drawback is that no risk limit can be set to individual
+options.
+3
+An approximate solution to the problem
+3.1
+Change of variables: beating the curse of dimensionality
+Under the above assumptions, the N +2 state variables can be replaced by only two: the instantaneous variance
+and the vega of the portfolio. This portfolio vega, dened by Vπ
+t := PN
+i=1 qi
+tVi, has the following dynamics:
+dVπ
+t =
+N
+X
+i=1
+Z
+R∗
++
+zVi N i,b(dt, dz) −N i,a(dt, dz)
+
+.
+It is clear then that the value function u veries
+∀(t, S, ν, q
+
+∈[0, T] × R2
++ × Q, u(t, S, ν, q
+
+= v
+ 
+t, ν,
+N
+X
+i=1
+qiVi
+!
+,
+where
+v (t, ν, Vπ) =
+sup
+(δs)s∈[t,T ]∈At
+E(t,ν,Vπ)
+
+
+Z T
+t
+
+
+
+
+N
+X
+i=1
+X
+j=a,b
+Z
+R∗
++
+zδi,j
+s (z)Λi,j(δi,j
+s (z))1{|Vπ
+s −ψ(j)zVi|≤V}µi,j(dz)
+
+
++Vπ
+s
+aP(s, νs) −aQ(s, νs)
+2√νs
+−γξ2
+8 Vπ
+s
+2
+
+ds
+
+.
+(3)
+Because (νt, Vπ
+t )t∈[0,T ] is a Markov process, the problem boils down, under the two above assumptions, to
+a low-dimensional optimal control problem where the two state variables are driven by 2N controlled point
+processes and a standard Brownian motion.
+3.2
+Hamilton-Jacobi-Bellman equation and optimal controls
+Following [21], the Hamilton-Jacobi-Bellman equation associated with (3) is given by
+0 = ∂tv(t, ν, Vπ) + aP(t, ν)∂νv(t, ν, Vπ) + 1
+2νξ2∂2
+ννv(t, ν, Vπ) + Vπ aP(t, ν) −aQ(t, ν)
+2√ν
+−γξ2
+8 Vπ2
++
+N
+X
+i=1
+X
+j=a,b
+Z
+R∗
++
+z1{|Vπ−ψ(j)zVi|≤V}Hi,j
+v
+ t, ν, Vπ
+−v
+ t, ν, Vπ −ψ(j)zVi
+z
+
+µi,j(dz),
+(4)
+6In Appendix A.2 we propose a method to relax the constant-vega assumption. This method is based on a Taylor expansion
+around the constant-vega case. The curse of dimensionality is tamed by the reduction of the problem to a Monte-Carlo simulation.
+7
+with nal condition v(T, ν, Vπ) = 0, where
+Hi,j(p) :=
+sup
+δi,j≥δ∞
+Λi,j(δi,j)(δi,j −p), i ∈{1, . . . , N}, j = a, b.
+We end up therefore with a low-dimensional functional equation of the Hamilton-Jacobi-Bellman type.
+Once the value function is known, the optimal controls, which are the optimal mid-to-bid and ask-to-mid
+associated with the N options, are given by the following formula (see [2, 12]):
+δi,j∗
+t
+(z) = max
+ 
+δ∞,
+ Λi,j−1
+ 
+−Hi,j′
+ 
+v
+ t, νt, Vπ
+t−
+
+−v
+ t, νt, Vπ
+t−−ψ(j)zVi
+z
+!!!
+, i ∈{1, . . . , N}, j = a, b.
+Remark 6. In the case where aP = aQ, it is evident that v does not depend on ν. In that case indeed, we
+have v(t, ν, Vπ) = w(t, Vπ) where w is solution of the simpler Hamilton-Jacobi-Bellman equation
+0 = ∂tw(t, Vπ) −γξ2
+8 Vπ2 +
+N
+X
+i=1
+X
+j=a,b
+Z
+R∗
++
+z1{|Vπ−ψ(j)zVi|≤V}Hi,j
+w
+ t, Vπ
+−w
+ t, Vπ −ψ(j)zVi
+z
+
+µi,j(dz),
+with nal condition w(T, Vπ) = 0.
+4
+Numerical results
+4.1
+Model parameters
+In this section we consider a book of options and derive the optimal quotes using the above approach.
+For this purpose, we consider an underlying stock with the following characteristics:
+- Stock price at time t = 0: S0 = 10 e.
+- Instantaneous variance at time t = 0: ν0 = 0.0225 year−1.
+- Heston model with aP(t, ν) = κP(θP −ν) where κP = 2 year−1 and θP = 0.04 year−1, and aQ(t, ν) =
+κQ(θQ −ν) where κQ = 3 year−1 and θQ = 0.0225 year−1.
+- Volatility of volatility parameter: ξ = 0.2 year−1.
+- Spot-variance correlation: ρ = −0.5.
+We consider the case of a market maker dealing with 20 European call options written on that stock where
+the strike×maturity couples are the elements (Ki, T i)i=1,...,20 of the set K × T , where
+K = {8 e, 9 e, 10 e, 11 e, 12 e}
+and
+T = {1 year, 1.5 years, 2 years, 3 years}.
+The associated implied volatility surface is plotted in Figure 1.7
+As far as the liquidity parameters of these options are concerned, we consider the following intensity functions:
+Λi,j(δ) =
+λi
+1 + eα+ β
+Vi δ , i ∈{1, . . . , N}, j = a, b,
+where λi =
+252×30
+1+0.7×|S0−Ki| year−1, α = 0.7, and β = 150 year
+1
+2 . The choice of λi corresponds to 30 requests
+per day for at-the-money options, and decreases to 12.5 for the most in- and out-the-money options. The
+choice of α corresponds to a probability of
+1
+1+e0.7 ≈33% to trade when the answered quote is the mid-price.
+The choice of β corresponds to a probability of
+1
+1+e−0.8 ≈69% to trade when the answered quote corresponds
+7This plot has been computed using 105 Monte-Carlo simulations for each option.
+8
+to an implied volatility 1% better for the client and a probability of
+1
+1+e2.2 ≈10% to trade when the answered
+quote corresponds to an implied volatility 1% worse for the client.
+Moreover, we assume transactions of constant size with zi = 5·105
+Oi
+0
+contracts for option i. This corresponds
+approximately to 500000 e per transaction.8 In other words, the measures µi,b and µi,a are Dirac masses at zi.
+Regarding the vega risk limits, we consider V = 107 e · year
+1
+2 .
+As far as the time horizon is concerned, we consider T = 0.0012 year (i.e. 0.3 day). This short time horizon
+surprisingly ensures convergence towards stationary quotes at time t = 0 (see Figure 3 below).
+Eventually, we consider a risk aversion parameter γ = 1 · 10−3 e−1.
+Time to Maturity
+1.00
+1.25
+1.50
+1.75
+2.00
+2.25
+2.50 2.75 3.00
+Strike
+8.0
+8.5
+9.0
+9.5
+10.0
+10.5
+11.0
+11.5
+12.0
+Implied Volatility
+0.135
+0.140
+0.145
+0.150
+0.155
+0.160
+0.1400
+0.1425
+0.1450
+0.1475
+0.1500
+0.1525
+0.1550
+0.1575
+Figure 1: Implied volatility surface associated with the above parameters
+4.2
+Optimal quotes
+Using a monotone explicit Euler scheme with linear interpolation on a grid of size 180 × 30 × 40, we approx-
+imate the value function solution to (4) (with Neumann conditions at the boundaries in ν) on the domain
+[0, T] × [0.0144, 0.0324] ×
+
+−V, V
+
+. This value function is plotted in Figure 2. We see that the dependence in
+ν is low. This is not surprising given that, at the time scale of the market making problem, the discrepancy
+between aP and aQ could be ignored.
+From that value function, we deduce the optimal bid and ask quotes of the market maker (in fact mid-to-bid and
+ask-to-mid) for each option as a function of the portfolio vega. As mentioned above, we chose T = 0.0012 year
+(i.e. 0.3 day)  a choice that ensures convergence of the optimal quotes to their stationary values (see Figure 3).
+8This is only an approximation as trade sizes are in number of options and option prices move.
+9
+0.0150
+0.0175
+0.0200
+0.0225
+0.0250
+0.0275
+0.0300
+Portfolio vega
+1e7
+1.0
+0.5
+0.0
+0.5
+1.0
+Value function
+0
+20000
+40000
+60000
+80000
+100000
+120000
+0
+20000
+40000
+60000
+80000
+100000
+120000
+Figure 2: Value function as a function of instantaneous variance and portfolio vega.
+0.0000
+0.0002
+0.0004
+0.0006
+0.0008
+0.0010
+0.0012
+Time
+0.0025
+0.0000
+0.0025
+0.0050
+0.0075
+0.0100
+0.0125
+Optimal mid-to-bid quote
+Figure 3: Optimal mid-to-bid quotes as a function of time for option 1: (K1, T 1) = (8, 1)  ν = 0.0225.
+10
+Focusing on the asymptotic values, we now present in Figures 4, 5, 6, 7, and 8, the optimal mid-to-bid quotes
+as a function of the portfolio vega for each strike and maturity. More precisely, as the options we consider can
+have very dierent prices, we consider instead of the optimal bid quotes themselves the ratio between each
+optimal mid-to-bid quote and the price (at time t = 0) of the corresponding option.
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.0075
+0.0050
+0.0025
+0.0000
+0.0025
+0.0050
+0.0075
+0.0100
+0.0125
+Optimal mid-to-bid divided by price
+(Ki,Ti) = (8.0,1.0) -- price = 2.06, vega = 0.41
+(Ki,Ti) = (8.0,1.5) -- price = 2.11, vega = 0.46
+(Ki,Ti) = (8.0,2.0) -- price = 2.16, vega = 0.48
+(Ki,Ti) = (8.0,3.0) -- price = 2.27, vega = 0.46
+Figure 4: Optimal mid-to-bid quotes divided by option price as a function of the portfolio vega for K=8.
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.01
+0.00
+0.01
+0.02
+0.03
+Optimal mid-to-bid divided by price
+(Ki,Ti) = (9.0,1.0) -- price = 1.21, vega = 0.91
+(Ki,Ti) = (9.0,1.5) -- price = 1.31, vega = 0.84
+(Ki,Ti) = (9.0,2.0) -- price = 1.41, vega = 0.76
+(Ki,Ti) = (9.0,3.0) -- price = 1.57, vega = 0.65
+Figure 5: Optimal mid-to-bid quotes divided by option price as a function of the portfolio vega for K=9.
+11
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.02
+0.00
+0.02
+0.04
+0.06
+0.08
+Optimal mid-to-bid divided by price
+(Ki,Ti) = (10.0,1.0) -- price = 0.58, vega = 1.25
+(Ki,Ti) = (10.0,1.5) -- price = 0.71, vega = 1.05
+(Ki,Ti) = (10.0,2.0) -- price = 0.83, vega = 0.92
+(Ki,Ti) = (10.0,3.0) -- price = 1.02, vega = 0.76
+Figure 6: Optimal mid-to-bid quotes divided by option price as a function of the portfolio vega for K=10.
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.050
+0.025
+0.000
+0.025
+0.050
+0.075
+0.100
+0.125
+0.150
+Optimal mid-to-bid divided by price
+(Ki,Ti) = (11.0,1.0) -- price = 0.21, vega = 1.05
+(Ki,Ti) = (11.0,1.5) -- price = 0.33, vega = 0.96
+(Ki,Ti) = (11.0,2.0) -- price = 0.44, vega = 0.88
+(Ki,Ti) = (11.0,3.0) -- price = 0.62, vega = 0.75
+Figure 7: Optimal mid-to-bid quotes divided by option price as a function of the portfolio vega for K=11.
+We clearly see that the optimal mid-to-bid quotes are increasing with the vega of the portfolio. This is ex-
+pected since the options all have a positive vega: the higher the vega of the portfolio, the lower the willingness
+to buy another option, and therefore the lower the bid price (and the higher the mid-to-bid) proposed by the
+market maker.
+12
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.05
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+Optimal mid-to-bid divided by price
+(Ki,Ti) = (12.0,1.0) -- price = 0.06, vega = 0.54
+(Ki,Ti) = (12.0,1.5) -- price = 0.13, vega = 0.65
+(Ki,Ti) = (12.0,2.0) -- price = 0.21, vega = 0.67
+(Ki,Ti) = (12.0,3.0) -- price = 0.36, vega = 0.65
+Figure 8: Optimal mid-to-bid quotes divided by option price as a function of the portfolio vega for K=12.
+Since option market makers usually reason in terms of implied volatility, we plot the same optimal bid quotes
+for the 20 options in terms of implied volatility (divided by the implied volatility at time t = 0) in Figures 9,
+10, 11, 12, and 13. We obtain of course decreasing curves.
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.94
+0.96
+0.98
+1.00
+1.02
+IV of optimal bid quote divided by initial IV
+(Ki,Ti) = (8.0,1.0) -- price = 2.06, vega = 0.41, IV = 0.1622
+(Ki,Ti) = (8.0,1.5) -- price = 2.11, vega = 0.46, IV = 0.1583
+(Ki,Ti) = (8.0,2.0) -- price = 2.16, vega = 0.48, IV = 0.1563
+(Ki,Ti) = (8.0,3.0) -- price = 2.27, vega = 0.46, IV = 0.1544
+Figure 9: Optimal (relative) bid implied volatility as a function of the portfolio vega for K=8.
+13
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.94
+0.96
+0.98
+1.00
+1.02
+IV of optimal bid quote divided by initial IV
+(Ki,Ti) = (9.0,1.0) -- price = 1.21, vega = 0.91, IV = 0.1538
+(Ki,Ti) = (9.0,1.5) -- price = 1.31, vega = 0.84, IV = 0.1518
+(Ki,Ti) = (9.0,2.0) -- price = 1.41, vega = 0.76, IV = 0.1515
+(Ki,Ti) = (9.0,3.0) -- price = 1.57, vega = 0.65, IV = 0.1508
+Figure 10: Optimal (relative) bid implied volatility as a function of the portfolio vega for K=9.
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.92
+0.94
+0.96
+0.98
+1.00
+1.02
+IV of optimal bid quote divided by initial IV
+(Ki,Ti) = (10.0,1.0) -- price = 0.58, vega = 1.25, IV = 0.1460
+(Ki,Ti) = (10.0,1.5) -- price = 0.71, vega = 1.05, IV = 0.1459
+(Ki,Ti) = (10.0,2.0) -- price = 0.83, vega = 0.92, IV = 0.1468
+(Ki,Ti) = (10.0,3.0) -- price = 1.02, vega = 0.76, IV = 0.1476
+Figure 11: Optimal (relative) bid implied volatility as a function of the portfolio vega for K=10.
+14
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.92
+0.94
+0.96
+0.98
+1.00
+1.02
+IV of optimal bid quote divided by initial IV
+(Ki,Ti) = (11.0,1.0) -- price = 0.21, vega = 1.05, IV = 0.1392
+(Ki,Ti) = (11.0,1.5) -- price = 0.33, vega = 0.96, IV = 0.1409
+(Ki,Ti) = (11.0,2.0) -- price = 0.44, vega = 0.88, IV = 0.1427
+(Ki,Ti) = (11.0,3.0) -- price = 0.62, vega = 0.75, IV = 0.1448
+Figure 12: Optimal (relative) bid implied volatility as a function of the portfolio vega for K=11.
+1.0
+0.5
+0.0
+0.5
+1.0
+Portfolio vega
+1e7
+0.92
+0.94
+0.96
+0.98
+1.00
+1.02
+IV of optimal bid quote divided by initial IV
+(Ki,Ti) = (12.0,1.0) -- price = 0.06, vega = 0.54, IV = 0.1344
+(Ki,Ti) = (12.0,1.5) -- price = 0.13, vega = 0.65, IV = 0.1367
+(Ki,Ti) = (12.0,2.0) -- price = 0.21, vega = 0.67, IV = 0.1395
+(Ki,Ti) = (12.0,3.0) -- price = 0.36, vega = 0.65, IV = 0.1423
+Figure 13: Optimal (relative) bid implied volatility as a function of the portfolio vega for K=12.
+15
+Conclusion
+In this article, we tackled the problem of an option market maker dealing with options on a single underlying
+asset.9 Using a constant-vega approximation, we showed how to reduce the problem to a low-dimensional
+functional equation whose solution can easily be approximated using an explicit Euler scheme and linear
+interpolation techniques. Furthermore, our method scales linearly in the number of options and can therefore
+be used with large books of options. Our method is illustrated by an example involving 20 European calls,
+but our model can be used with any European options.
+A
+Appendices
+A.1
+An alternative to the ∆-hedging assumption
+Throughout the body of this paper, we assumed that the market maker ensured ∆-hedging. In this appendix,
+we show that this assumption can be relaxed without much change in the reasoning.
+Let us introduce the process (qS
+t )t∈[0,T ] representing the inventory of the market maker in the underlying asset.
+The dynamics of the cash process of the market maker (Xt)t∈[0,T ] rewrites as
+dXt =
+N
+X
+i=1
+ Z
+R∗
++
+z
+
+δi,b
+t (z)N i,b
+t (dt, dz) + δi,a
+t (z)N i,a
+t
+(dt, dz)
+
+−Oi
+tdqi
+t
+
+−StdqS
+t −d
+
+qS, S
+
+t.
+The Mark-to-Market value of the portfolio writes
+Vt = Xt + qS
+t St +
+N
+X
+i=1
+qi
+tOi
+t
+and its dynamics is
+dVt
+=
+N
+X
+i=1
+ Z
+R∗
++
+z
+
+δi,b
+t (z)N i,b
+t (dt, dz) + δi,a
+t (z)N i,a
+t
+(dt, dz)
+
++ qi
+tVi
+t
+aP(t, νt) −aQ(t, νt)
+2√νt
+dt + ξ
+2qi
+tVi
+tdW ν
+t
+!
++√νtSt
+ N
+X
+i=1
+qi
+t∂SOi(t, St, νt) + qS
+t
+!
+dW S
+t .
+Denoting by ∆π
+t := PN
+i=1 qi
+t∂SOi(t, St, νt) the ∆of the market maker's portfolio at time t, our mean-variance
+optimization problem becomes
+sup
+(δ,qS)∈A′ E [VT ] −γ
+2 V
+"Z T
+0
+ξ
+2Vπ
+t dW ν
+t + √νtSt
+ ∆π
+t + qS
+t
+
+dW S
+t
+#
+,
+where
+A′ =
+
+(δt, qS
+t )t∈[0,T ]
+|
+δ is a F-predictable R2N-valued map bounded from below by δ∞
+and qS is an R-valued adapted process with E
+"Z T
+0
+νtS2
+t
+ ∆π
+t + qS
+t
+2 dt
+#
+< +∞
+)
+.
+Noticing that
+V
+ Z T
+0
+ξ
+2Vπ
+t dW ν
+t +√νtSt
+ ∆π
+t + qS
+t
+
+dW S
+t
+!
+=E
+"Z T
+0
+ξ2
+4 Vπ
+t
+2 + νtS2
+t
+ ∆π
+t +qS
+t
+2+ρξVπ
+t
+√νtSt
+ ∆π
+t + qS
+t
+
+dt
+#
+,
+9As noted when presenting this paper to a wide audience, our method could easily be extended to the case of multiple underlying
+assets using the same method as in [2] if the instantaneous variance processes of the dierent assets are driven by a few factors.
+16
+we easily see that the variance term is minimized for qS = qS∗where
+∀t ∈[0, T],
+qS
+t
+∗= −∆π
+t −ρξVπ
+t
+2√νtSt
+,
+and that its minimum value is
+(1 −ρ2)
+Z T
+0
+ξ2
+4 Vπ
+t
+2dt.
+Therefore, the optimization problem boils down to
+sup
+δ∈A
+E
+
+
+Z T
+0
+
+
+
+
+N
+X
+i=1
+X
+j=a,b
+Z
+R∗
++
+zδi,j
+t (z)Λi,j(δi,j
+t (z))1{|Vπ
+t −ψ(j)zVi|≤V}µi,j(dz)
+
+
++ Vπ
+t
+aP(t, νt) −aQ(t, νt)
+2√νt
+−γξ2
+8 (1 −ρ2)Vπ
+t
+2
+
+dt
+
+,
+and we recover the same optimization problem as in the body of the paper, except that the volatility of
+volatility parameter ξ is multiplied by
+p
+1 −ρ2 to account for the reduction of risk made possible by the
+optimal trading strategy in the underlying asset in presence of vol-spot correlation.
+A.2
+Beyond the constant-vega assumption
+In this appendix we propose a method to relax our main assumption: the constant-vega approximation.
+If, for all i ∈{1, . . . , N}, the process
+ Vi
+t
+
+t∈[0,T ] stays close to its initial value Vi
+0 =: Vi, then it is reasonable to
+consider a perturbative approach around the constant-vega approximation. In particular, instead of assuming
+that PN
+i=1 qi
+t∂√νOi(t, St, νt) ≃PN
+i=1 qi
+t∂√νOi(0, S0, ν0) = PN
+i=1 qi
+tVi = Vπ
+t , we consider the expansion
+N
+X
+i=1
+qi
+t∂√νOi(t, St, νt) = Vπ
+t + εW(t, St, νt, qt)
+and we consider an expansion of the value function u of the following form:
+u(t, S, ν, q) = v
+ 
+t, ν,
+N
+X
+i=1
+qi∂√νOi(0, S0, ν0)
+!
++ εϕ(t, S, ν, q) = v
+ 
+t, ν,
+N
+X
+i=1
+qiVi
+!
++ εϕ(t, S, ν, q).
+Assuming that Q = RN and noting that the Hamilton-Jacobi-Bellman equation associated with u is
+0 = ∂tu(t, S, ν, q) + aP(t, ν)∂νu(t, S, ν, q) + 1
+2νS2∂2
+SSu(t, S, ν, q) + 1
+2νξ2∂2
+ννu(t, S, ν, q) + ρνSξ∂2
+νSu(t, S, ν, q)
++ aP(t, ν) −aQ(t, ν)
+2√ν
+N
+X
+i=1
+qi∂√νOi(t, S, ν) −γξ2
+8
+ N
+X
+i=1
+qi∂√νOi(t, S, ν)
+!2
++
+N
+X
+i=1
+X
+j=a,b
+Z
+R∗
++
+zHi,j
+u(t, S, ν, q) −u(t, S, ν, q −ψ(j)zei)
+z
+
+µi,j(dz),
+with terminal condition equal to 0, the rst-order term in ε in the Taylor expansion gives
+0 = ∂tϕ(t, S, ν, q) + aP(t, ν)∂νϕ(t, S, ν, q) + 1
+2νS2∂2
+SSϕ(t, S, ν, q) + 1
+2νξ2∂2
+ννϕ(t, S, ν, q) + ρνSξ∂2
+νSϕ(t, s, ν, q)
++aP(t, ν) −aQ(t, ν)
+2√ν
+W(t, S, ν, q) −γξ2
+4 W(t, S, ν, q)
+N
+X
+i=1
+qiVi
++
+N
+X
+i=1
+X
+j=a,b
+Z
+R∗
++
+Hi,j′
+ 
+v(t, ν, PN
+l=1 qlVl) −v(t, ν, PN
+l=1 qlVl −ψ(j)zVi)
+z
+!
+×
+ ϕ(t, S, ν, q) −ϕ(t, S, ν, q −ψ(j)zei)
+
+µi,j(dz),
+17
+with terminal condition equal to 0.
+This equation is linear and therefore ϕ(t, S, ν, q) admits a Feynman-Kac representation that tames the curse
+of dimensionality for practical applications:
+ϕ(t, S, ν, q) = E(t,S,ν,q)
+"Z T
+t
+ 
+aP(s, νs) −aQ(s, νs)
+2√νs
+W(s, Ss, νs, qs) −γξ2
+4 W(s, Ss, νs, qs)
+N
+X
+i=1
+qi
+sVi
+!
+ds
+#
+where, for each i ∈{1, . . . , N}, the processes N i,b and N i,a have respective intensities
+˜λi,b
+t (dz) = −Hi,b′
+ 
+v(t, νt, PN
+l=1 ql
+t−Vl) −v(t, νt, PN
+l=1 ql
+t−Vl + zVi)
+z
+!
+µi,b(dz),
+˜λi,a
+t (dz) = −Hi,a′
+ 
+v(t, νt, PN
+l=1 ql
+t−Vl) −v(t, νt, PN
+l=1 ql
+t−Vl −zVi)
+z
+!
+µi,a(dz),
+with as before dqi
+t =
+R
+R∗
++ z
+ N i,b(dt, dz) −N i,a(dt, dz)
+
+.
+Subsequently, the function ϕ can be computed using a Monte-Carlo algorithm and quotes accounting for the
+variation of the vegas can therefore be computed (to the rst order in ε).
+A.3
+On the construction of the processes N i,b and N i,a
+Let us consider a new ltered probability space
+ Ω, F, (Ft)t∈R+, ˜P
+
+. For the sake of simplicity, assume that
+there is only one option (the generalization is straightforward). Let us introduce ¯N b and ¯N a two independent
+compound Poisson processes of intensity 1 whose increments follow respectively the distributions µb(dz) and
+µa(dz) with support on R∗
++. We denote by ¯N b(dt, dz) and ¯N a(dt, dz) the associated random measures. Let
+N b and N a be two processes, starting at 0, solutions of the coupled stochastic dierential equation:
+dN b
+t =
+Z
+R∗
++
+1{Nb
+t−−Na
+t−+z∈Q} ¯N b(dt, dz),
+dN a
+t =
+Z
+R∗
++
+1{Nb
+t−−Na
+t−−z∈Q} ¯N a(dt, dz).
+Then, under ˜P, N b and N a are two R∗
++-marked point processes with respective intensity kernels
+λb
+t(dz) = 1{qt−+z∈Q}µb(dz)
+and
+λa
+t (dz) = 1{qt−−z∈Q}µa(dz),
+where qt := N b
+t −N a
+t . We denote by N b(dt, dz) and N a(dt, dz) the associated random measures. For each
+δ ∈A, we introduce the probability measure ˜Pδ given by the Radon-Nikodym derivative
+d˜Pδ
+d˜P
+
+Ft = Lδ
+t,
+(5)
+where
+ Lδ
+t
+
+t≥0 is the unique solution of the stochastic dierential equation
+dLδ
+t = Lδ
+t−
+ Z
+R∗
++
+ Λb(δb(t, z)) −1
+ ˜N b(dt, dz) +
+Z
+R∗
++
+(Λa(δa(t, z)) −1) ˜N a(dt, dz)
+!
+,
+with Lδ
+0 = 1, where ˜N b and ˜N a are the compensated processes associated with N b and N a respectively.
+We then know from Girsanov theorem that under ˜Pδ, the jump processes N b and N a have respective intensity
+kernels
+λδ,b
+t (dz) = Λb(δb(t, z))1{qt−+z∈Q}µb(dz)
+and
+λδ,a
+t (dz) = Λa(δa(t, z))1{qt−−z∈Q}µa(dz)
+as in the body of the paper.
+18
+References
+[1] Marco Avellaneda and Sasha Stoikov. High-frequency trading in a limit order book. Quantitative Finance,
+8(3):217224, 2008.
+[2] Philippe Bergault and Olivier Guéant. Size matters for OTC market makers: general results and dimen-
+sionality reduction techniques. arXiv preprint arXiv:1907.01225. 2019.
+[3] Lorenzo Bergomi. Smile dynamics II. Available at SSRN 1493302. 2005.
+[4] Lorenzo Bergomi. Stochastic volatility modeling. CRC Press, 2015.
+[5] Álvaro Cartea, Ryan Donnelly, and Sebastian Jaimungal. Algorithmic trading with model uncertainty.
+SIAM Journal on Financial Mathematics, 8(1):635671, 2017.
+[6] Álvaro Cartea, Sebastian Jaimungal, and José Penalva. Algorithmic and high-frequency trading. Cam-
+bridge University Press, 2015.
+[7] Álvaro Cartea, Sebastian Jaimungal, and Jason Ricci.
+Buy low, sell high: A high frequency trading
+perspective. SIAM Journal on Financial Mathematics, 5(1):415444, 2014.
+[8] Soene El Aoud and Frédéric Abergel. A stochastic control approach to option market making. Market
+microstructure and liquidity, 1(01):1550006, 2015.
+[9] Jim Gatheral. The volatility surface: a practitioner's guide, volume 357. John Wiley & Sons, 2011.
+[10] Sanford J Grossman and Merton H Miller. Liquidity and market structure. The Journal of Finance,
+43(3):617633, 1988.
+[11] Olivier Guéant.
+The Financial Mathematics of Market Liquidity: From optimal execution to market
+making, volume 33. CRC Press, 2016.
+[12] Olivier Guéant. Optimal market making. Applied Mathematical Finance, 24(2):112154, 2017.
+[13] Olivier Guéant and Charles-Albert Lehalle. General intensity shapes in optimal liquidation. Mathematical
+Finance, 25(3):457495, 2015.
+[14] Olivier Guéant, Charles-Albert Lehalle, and Joaquin Fernandez-Tapia. Dealing with the inventory risk:
+a solution to the market making problem. Mathematics and nancial economics, 7(4):477507, 2013.
+[15] Olivier Guéant and Iuliia Manziuk. Deep reinforcement learning for market making in corporate bonds:
+beating the curse of dimensionality. Applied Mathematical Finance, 26(5):387452, 2019.
+[16] Fabien Guilbaud and Huyên Pham. Optimal high-frequency trading with limit and market orders. Quan-
+titative Finance, 13(1):7994, 2013.
+[17] Fabien Guilbaud and Huyên Pham. Optimal high-frequency trading in a pro-rata microstructure with
+predictive information. Mathematical Finance, 25(3):545575, 2015.
+[18] Steven L Heston. A closed-form solution for options with stochastic volatility with applications to bond
+and currency options. The review of nancial studies, 6(2):327343, 1993.
+[19] Thomas Ho and Hans R Stoll. Optimal dealer pricing under transactions and return uncertainty. Journal
+of Financial economics, 9(1):4773, 1981.
+[20] Iuliia Manziuk. Optimal control and machine learning in nance: contributions to the literature on optimal
+execution, market making, and exotic options. PhD dissertation, Université Paris 1 Panthéon-Sorbonne,
+2020.
+[21] Bernt Øksendal and Agnes Sulem.
+Applied stochastic control of jump diusions. Springer Science &
+Business Media, 2007.
+19
+[22] Pamela Saliba. High-frequency trading: Statistical analysis, modelling and regulation. PhD dissertation,
+Ecole Polytechnique, 2019.
+[23] Sasha Stoikov and Mehmet Sa§lam. Option market making under inventory risk. Review of Derivatives
+Research, 12(1):5579, 2009.
+20
