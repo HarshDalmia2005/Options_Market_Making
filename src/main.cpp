@@ -1,48 +1,43 @@
-#include "heston.hpp"
-#include "option_pricer.hpp"
+#include "intensity.hpp"
 #include <iostream>
 #include <iomanip>
-#include <vector>
 
 using namespace std;
 
 int main() {
     try {
-        cout << "Starting Option Market Maker..." << endl;
+        // Values from the paper's parameters for K=10, T=1.0 (Page 8)
+        double lambda = 75.6; // 252 * 30 / (1 + 0.7 * |10 - 10|)
+        double alpha = 0.7;
+        double beta = 150.0;
+        double vega = 1.25;
+
+        IntensityFunction intensity(lambda, alpha, beta, vega);
         
-        // 1. Initialize Heston Parameters (Module 1)
-        HestonParams params; 
-        cout << "Heston params initialized. S0=" << params.S0 
-             << " nu0=" << params.nu0 << endl;
+        // Build the lookup table between p = -0.05 and p = 0.05
+        intensity.build_lookup_table(-0.05, 0.05, 1000);
+
+        cout << fixed << setprecision(6);
+        cout << "Testing Hamiltonian Mathematical Properties:\n";
+        cout << "------------------------------------------\n";
         
-        // 2. Initialize Pricer (Module 2)
-        HestonPricer pricer(params);
+        cout << "1. H(0) > 0 Check:\n";
+        cout << "   H(0) = " << intensity.H(0.0) << " (Must be positive)\n\n";
+
+        cout << "2. Convexity and Derivative Check:\n";
+        cout << "   p         H(p)        H'(p)\n";
+        cout << "---------------------------------\n";
         
-        // 3. Build and retrieve the option grid
-        cout << "Computing option prices (20 options)..." << endl;
-        vector<OptionSpec> grid = pricer.build_option_grid();
-        cout << "Done. Computed " << grid.size() << " options.\n" << endl;
-        
-        // 4. Print results in a formatted table
-        cout << fixed << setprecision(4);
-        cout << "-------------------------------------------------------------------\n";
-        cout << " K     T       Price     Vega      Implied Vol    Base Lambda\n";
-        cout << "-------------------------------------------------------------------\n";
-        
-        for (const auto& opt : grid) {
-            if (opt.T == 1.0) {
-                cout << setw(5) << setprecision(1) << opt.K << "  "
-                     << setw(5) << opt.T << "  "
-                     << setw(8) << setprecision(2) << opt.price << "  "
-                     << setw(8) << opt.vega << "  "
-                     << setw(11) << setprecision(4) << opt.implied_vol << "  "
-                     << setw(12) << setprecision(2) << opt.lambda << "\n";
-            }
+        vector<double> p_test = {-0.02, -0.01, 0.0, 0.01, 0.02};
+        for (double p : p_test) {
+            cout << setw(8) << p << "  " 
+                 << setw(10) << intensity.H(p) << "  " 
+                 << setw(10) << intensity.H_prime(p) << "\n";
         }
-        cout << "-------------------------------------------------------------------\n";
+        cout << "---------------------------------\n";
         
     } catch (const exception& e) {
-        cout << "Error: " << e.what() << endl;
+        cerr << "Error: " << e.what() << "\n";
         return 1;
     }
     

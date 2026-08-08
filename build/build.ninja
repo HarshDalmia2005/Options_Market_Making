@@ -12,7 +12,7 @@
 
 # =============================================================================
 # Project: OptionMarketMaker
-# Configurations: 
+# Configurations: Release
 # =============================================================================
 
 #############################################
@@ -20,6 +20,11 @@
 
 ninja_required_version = 1.5
 
+
+#############################################
+# Set configuration variable for custom commands.
+
+CONFIGURATION = Release
 # =============================================================================
 # Include auxiliary files.
 
@@ -44,17 +49,28 @@ cmake_ninja_workdir = D$:/MM/build/
 
 build cmake_object_order_depends_target_option_mm: phony || .
 
-build CMakeFiles/option_mm.dir/src/main.cpp.obj: CXX_COMPILER__option_mm_unscanned_ D$:/MM/src/main.cpp || cmake_object_order_depends_target_option_mm
+build CMakeFiles/option_mm.dir/src/main.cpp.obj: CXX_COMPILER__option_mm_unscanned_Release D$:/MM/src/main.cpp || cmake_object_order_depends_target_option_mm
+  CONFIG = Release
   DEP_FILE = CMakeFiles\option_mm.dir\src\main.cpp.obj.d
-  FLAGS = -std=gnu++17
+  FLAGS = -O3 -DNDEBUG -std=gnu++17
   INCLUDES = -ID:/MM/include
   OBJECT_DIR = CMakeFiles\option_mm.dir
   OBJECT_FILE_DIR = CMakeFiles\option_mm.dir\src
   TARGET_SUPPORT_DIR = CMakeFiles\option_mm.dir
 
-build CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj: CXX_COMPILER__option_mm_unscanned_ D$:/MM/src/option_pricer.cpp || cmake_object_order_depends_target_option_mm
+build CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj: CXX_COMPILER__option_mm_unscanned_Release D$:/MM/src/option_pricer.cpp || cmake_object_order_depends_target_option_mm
+  CONFIG = Release
   DEP_FILE = CMakeFiles\option_mm.dir\src\option_pricer.cpp.obj.d
-  FLAGS = -std=gnu++17
+  FLAGS = -O3 -DNDEBUG -std=gnu++17
+  INCLUDES = -ID:/MM/include
+  OBJECT_DIR = CMakeFiles\option_mm.dir
+  OBJECT_FILE_DIR = CMakeFiles\option_mm.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\option_mm.dir
+
+build CMakeFiles/option_mm.dir/src/intensity.cpp.obj: CXX_COMPILER__option_mm_unscanned_Release D$:/MM/src/intensity.cpp || cmake_object_order_depends_target_option_mm
+  CONFIG = Release
+  DEP_FILE = CMakeFiles\option_mm.dir\src\intensity.cpp.obj.d
+  FLAGS = -O3 -DNDEBUG -std=gnu++17
   INCLUDES = -ID:/MM/include
   OBJECT_DIR = CMakeFiles\option_mm.dir
   OBJECT_FILE_DIR = CMakeFiles\option_mm.dir\src
@@ -68,7 +84,9 @@ build CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj: CXX_COMPILER__option_m
 #############################################
 # Link the executable option_mm.exe
 
-build option_mm.exe: CXX_EXECUTABLE_LINKER__option_mm_ CMakeFiles/option_mm.dir/src/main.cpp.obj CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj
+build option_mm.exe: CXX_EXECUTABLE_LINKER__option_mm_Release CMakeFiles/option_mm.dir/src/main.cpp.obj CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj CMakeFiles/option_mm.dir/src/intensity.cpp.obj
+  CONFIG = Release
+  FLAGS = -O3 -DNDEBUG
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\option_mm.dir
   POST_BUILD = cd .

@@ -8,7 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(option_mm
     src/main.cpp
     src/option_pricer.cpp
+    src/intensity.cpp
 )
 
 target_include_directories(option_mm PRIVATE include/)
-
+
