@@ -1,11 +1,10 @@
 # ninja log v7
-30	1077	8078738787700580	CMakeFiles/option_mm.dir/src/main.cpp.obj	6e2f26f4c4c66a1b
-7	1048	8078192066314178	CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj	9e1884e93dad127b
-1078	1464	8078738798219223	option_mm.exe	6119bfbbc85dbb69
-25	741	8078739385781252	build.ninja	ffdd83c85bf1b840
-25	741	8078739385759746	D:/MM/build/cmake_install.cmake	ffdd83c85bf1b840
-101	915	8078738788365552	CMakeFiles/option_mm.dir/src/intensity.cpp.obj	9ec4cb487f0c3136
 9	756	8078739390193756	CMakeFiles/option_mm.dir/src/main.cpp.obj	c8713885dc0267a9
-146	801	8078739391610575	CMakeFiles/option_mm.dir/src/intensity.cpp.obj	aa142f92bd580bc8
 73	1078	8078739390863963	CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj	dd8ddd64fbb84310
 1078	1371	8078739400939780	option_mm.exe	7fafbb63f948aea8
+25	741	8078746252558805	build.ninja	ffdd83c85bf1b840
+25	741	8078746252547824	D:/MM/build/cmake_install.cmake	ffdd83c85bf1b840
+146	801	8078739391610575	CMakeFiles/option_mm.dir/src/intensity.cpp.obj	aa142f92bd580bc8
+7	1147	8078746257044075	CMakeFiles/option_mm.dir/src/main.cpp.obj	c8713885dc0267a9
+73	1211	8078746257681003	CMakeFiles/option_mm.dir/src/hjb_solver.cpp.obj	7137a8baba48cac0
+1211	1520	8078746269111086	option_mm.exe	22415c962e59dd63

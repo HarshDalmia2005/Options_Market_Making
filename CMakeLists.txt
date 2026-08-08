@@ -9,6 +9,7 @@ add_executable(option_mm
     src/main.cpp
     src/option_pricer.cpp
     src/intensity.cpp
+    src/hjb_solver.cpp
 )
 
 target_include_directories(option_mm PRIVATE include/)
