@@ -40,40 +40,54 @@ The implementation is broken down into 7 distinct modules:
 
 ### Module 1: Heston Model
 The underlying asset $S_t$ and its instantaneous variance $\nu_t$ follow these dynamics under the risk-neutral measure $\mathbb{Q}$ (assuming interest rate $r=0$):
+
 $$ dS_t = \sqrt{\nu_t} S_t dW^S_t $$
+
 $$ d\nu_t = \kappa^\mathbb{Q}(\theta^\mathbb{Q} - \nu_t)dt + \xi \sqrt{\nu_t} dW^\nu_t $$
+
 where the two Wiener processes are correlated: $dW^S_t dW^\nu_t = \rho dt$.
 
 ### Module 2: Option Pricer
 The price of a European call option is computed using the **Gil-Pelaez Inversion Theorem**:
+
 $$ C = S_0 P_1 - K P_2 $$
+
 The in-the-money probabilities $P_j$ are computed by integrating the complex characteristic function $\phi(u)$:
+
 $$ P_j = \frac{1}{2} + \frac{1}{\pi} \int_0^\infty \text{Re} \left[ \frac{e^{-i u \ln(K)} \phi_j(u)}{i u} \right] du $$
+
 where $\phi_2(u) = \phi(u)$ and $\phi_1(u) = \frac{\phi(u - i)}{S_0}$. 
 
 The option's Vega is calculated with respect to standard deviation, using central finite differences on variance:
+
 $$ \mathcal{V} = \frac{\partial C}{\partial \sqrt{\nu}} = 2\sqrt{\nu} \frac{\partial C}{\partial \nu} $$
 
 ### Module 3: Market Microstructure (Intensity Functions)
 The market maker's limit orders are executed according to a logistic intensity function depending on the quoted spread $\delta$:
+
 $$ \Lambda(\delta) = \frac{\lambda}{1 + \exp\left(\alpha + \frac{\beta}{\mathcal{V}} \delta\right)} $$
+
 To solve the stochastic optimal control problem, we pre-compute the Hamiltonian $H(p)$ which maximizes the expected rate of revenue:
+
 $$ H(p) = \sup_{\delta} \Lambda(\delta)(\delta - p) $$
 
 ### Module 4: HJB PDE Solver
 The optimal value function $v(t, \nu, V^\pi)$ is found by solving the following non-linear Hamilton-Jacobi-Bellman equation backward in time:
+
 $$ 
-\partial_t v + \frac{1}{2}\xi^2 \nu \partial_{\nu\nu} v + \kappa^\mathbb{P}(\theta^\mathbb{P} - \nu)\partial_\nu v + V^\pi \frac{\kappa^\mathbb{P}(\theta^\mathbb{P} - \nu) - \kappa^\mathbb{Q}(\theta^\mathbb{Q} - \nu)}{2\sqrt{\nu}} - \frac{1}{8}\gamma \xi^2 (V^\pi)^2 
-$$
-$$
+\partial_t v + \frac{1}{2}\xi^2 \nu \partial_{\nu\nu} v + \kappa^\mathbb{P}(\theta^\mathbb{P} - \nu)\partial_\nu v + V^\pi \frac{\kappa^\mathbb{P}(\theta^\mathbb{P} - \nu) - \kappa^\mathbb{Q}(\theta^\mathbb{Q} - \nu)}{2\sqrt{\nu}} - \frac{1}{8}\gamma \xi^2 (V^\pi)^2 \\
 + \sum_{i=1}^N z_i H\left(\frac{v(t, \nu, V^\pi) - v(t, \nu, V^\pi - z_i \mathcal{V}_i)}{z_i}\right) + \sum_{i=1}^N z_i H\left(\frac{v(t, \nu, V^\pi) - v(t, \nu, V^\pi + z_i \mathcal{V}_i)}{z_i}\right) = 0 
 $$
+
 with the terminal condition $v(T, \nu, V^\pi) = 0$. The terms represent (in order): time decay, variance diffusion, physical variance drift, volatility risk premium, variance risk penalty, and the expected revenue from executed bid and ask limit orders.
 
 ### Module 5: Optimal Quotes
 The optimal bid and ask spreads ($\delta_i^b, \delta_i^a$) around the mid-price for option $i$ are extracted by inverting the derivative of the Hamiltonian $H$ over the marginal value $p$:
+
 $$ \delta^b_i = \Lambda^{-1}\left( -H'\left(\frac{v(t, \nu, V^\pi) - v(t, \nu, V^\pi + z_i \mathcal{V}_i)}{z_i}\right) \right) $$
+
 $$ \delta^a_i = \Lambda^{-1}\left( -H'\left(\frac{v(t, \nu, V^\pi) - v(t, \nu, V^\pi - z_i \mathcal{V}_i)}{z_i}\right) \right) $$
+
 where $\Lambda^{-1}(y) = \frac{\mathcal{V}_i}{\beta} \left( \ln\left(\frac{\lambda}{y} - 1\right) - \alpha \right)$.
 
 ## Building the Project
