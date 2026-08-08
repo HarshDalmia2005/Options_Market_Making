@@ -1,10 +1,15 @@
 # ninja log v7
-9	756	8078739390193756	CMakeFiles/option_mm.dir/src/main.cpp.obj	c8713885dc0267a9
-73	1078	8078739390863963	CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj	dd8ddd64fbb84310
-1078	1371	8078739400939780	option_mm.exe	7fafbb63f948aea8
-25	741	8078746252558805	build.ninja	ffdd83c85bf1b840
-25	741	8078746252547824	D:/MM/build/cmake_install.cmake	ffdd83c85bf1b840
-146	801	8078739391610575	CMakeFiles/option_mm.dir/src/intensity.cpp.obj	aa142f92bd580bc8
 7	1147	8078746257044075	CMakeFiles/option_mm.dir/src/main.cpp.obj	c8713885dc0267a9
-73	1211	8078746257681003	CMakeFiles/option_mm.dir/src/hjb_solver.cpp.obj	7137a8baba48cac0
+73	1078	8078739390863963	CMakeFiles/option_mm.dir/src/option_pricer.cpp.obj	dd8ddd64fbb84310
 1211	1520	8078746269111086	option_mm.exe	22415c962e59dd63
+25	741	8078763710832151	build.ninja	ffdd83c85bf1b840
+25	741	8078763710800780	D:/MM/build/cmake_install.cmake	ffdd83c85bf1b840
+146	801	8078739391610575	CMakeFiles/option_mm.dir/src/intensity.cpp.obj	aa142f92bd580bc8
+73	1211	8078746257681003	CMakeFiles/option_mm.dir/src/hjb_solver.cpp.obj	7137a8baba48cac0
+3	649	8078763710832151	build.ninja	ffdd83c85bf1b840
+3	649	8078763710832151	D:/MM/build/cmake_install.cmake	ffdd83c85bf1b840
+74	727	8078763712180650	CMakeFiles/option_mm.dir/src/optimal_quotes.cpp.obj	3a66ee61020b9dbe
+7	1488	8078763711501181	CMakeFiles/option_mm.dir/src/main.cpp.obj	c8713885dc0267a9
+1489	1818	8078763726317944	option_mm.exe	52ce1947c60af491
+9	1503	8078765798369180	CMakeFiles/option_mm.dir/src/main.cpp.obj	c8713885dc0267a9
+1504	1819	8078765813322211	option_mm.exe	52ce1947c60af491

@@ -10,6 +10,7 @@ add_executable(option_mm
     src/option_pricer.cpp
     src/intensity.cpp
     src/hjb_solver.cpp
+    src/optimal_quotes.cpp
 )
 
 target_include_directories(option_mm PRIVATE include/)
