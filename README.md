@@ -74,10 +74,7 @@ $$ H(p) = \sup_{\delta} \Lambda(\delta)(\delta - p) $$
 ### Module 4: HJB PDE Solver
 The optimal value function $v(t, \nu, V^\pi)$ is found by solving the following non-linear Hamilton-Jacobi-Bellman equation backward in time:
 
-$$ 
-\partial_t v + \frac{1}{2}\xi^2 \nu \partial_{\nu\nu} v + \kappa^\mathbb{P}(\theta^\mathbb{P} - \nu)\partial_\nu v + V^\pi \frac{\kappa^\mathbb{P}(\theta^\mathbb{P} - \nu) - \kappa^\mathbb{Q}(\theta^\mathbb{Q} - \nu)}{2\sqrt{\nu}} - \frac{1}{8}\gamma \xi^2 (V^\pi)^2 \\
-+ \sum_{i=1}^N z_i H\left(\frac{v(t, \nu, V^\pi) - v(t, \nu, V^\pi - z_i \mathcal{V}_i)}{z_i}\right) + \sum_{i=1}^N z_i H\left(\frac{v(t, \nu, V^\pi) - v(t, \nu, V^\pi + z_i \mathcal{V}_i)}{z_i}\right) = 0 
-$$
+$$ \partial_t v + \frac{1}{2}\xi^2 \nu \partial_{\nu\nu} v + \kappa^\mathbb{P}(\theta^\mathbb{P} - \nu)\partial_\nu v + V^\pi \frac{\kappa^\mathbb{P}(\theta^\mathbb{P} - \nu) - \kappa^\mathbb{Q}(\theta^\mathbb{Q} - \nu)}{2\sqrt{\nu}} - \frac{1}{8}\gamma \xi^2 (V^\pi)^2 + \sum_{i=1}^N z_i H\left(\frac{v(t, \nu, V^\pi) - v(t, \nu, V^\pi - z_i \mathcal{V}_i)}{z_i}\right) + \sum_{i=1}^N z_i H\left(\frac{v(t, \nu, V^\pi) - v(t, \nu, V^\pi + z_i \mathcal{V}_i)}{z_i}\right) = 0 $$
 
 with the terminal condition $v(T, \nu, V^\pi) = 0$. The terms represent (in order): time decay, variance diffusion, physical variance drift, volatility risk premium, variance risk penalty, and the expected revenue from executed bid and ask limit orders.
 
