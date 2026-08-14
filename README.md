@@ -164,6 +164,12 @@ By enforcing a realistic `MAX_ORDER_SIZE` limit (0.5 contracts) on fills, the st
 
 The portfolio vega risk rigorously obeyed the maximum cap thresholds imposed by the HJB penalty parameters for all 4 markets.
 
+#### Real-World Profitability (BTCUSDT)
+![BTCUSDT Real USD Profit](results/plots/backtest/btcusdt/backtest_btcusdt_real_pnl.png)
+
+#### Real-World Profitability (ETHUSDT)
+![ETHUSDT Real USD Profit](results/plots/backtest/ethusdt/backtest_ethusdt_real_pnl.png)
+
 ### Terminal Output Log
 ```text
 ========================================================
