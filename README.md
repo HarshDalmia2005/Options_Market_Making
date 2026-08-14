@@ -30,11 +30,12 @@ The implementation is broken down into 7 distinct modules:
 - [x] **Module 5: Optimal Quotes**
   - Extracts the optimal mid-to-bid and ask-to-mid spreads by inverting the intensity function on the solved value function.
   - *Status: Complete. Successfully extracted and exported to CSV.*
-- [ ] **Module 6: Simulation Engine**
-  - Evaluates the strategy's PnL via Monte-Carlo simulation.
+- [x] **Module 6: Simulation Engine**
+  - Evaluates the strategy's PnL via Monte-Carlo simulation using Euler-Maruyama discretization.
+  - *Status: Complete. 1,000 simulations completed in ~0.4 seconds.*
 - [x] **Module 7: Visualization**
-  - Python scripts to reproduce all 13 figures from the paper using CSV outputs.
-  - *Status: Complete. Generated 10 replication charts using Matplotlib.*
+  - Python scripts to reproduce all 13 figures from the paper using CSV outputs, plus simulation distributions.
+  - *Status: Complete. Generated 13 replication charts using Matplotlib.*
 
 ## Mathematical Formulations
 
@@ -132,34 +133,34 @@ The peak value accurately reproduces the magnitude of the theoretical optimal re
 
 ### Optimal Quotes & Visualization (Modules 5 & 7)
 The optimal quotes were successfully extracted by the C++ engine and exported to a CSV, covering the full grid of 20 options (4 maturities $\times$ 5 strikes).
-The Python visualization script processed this data to generate **10 full replication charts** (corresponding to Figures 4-13 in the paper), successfully proving that:
+The Python visualization script (`plot_quotes.py`) processes this data to generate **13 full replication charts** (corresponding to Figures 2 and 4-13 in the paper), successfully proving that:
 - Spreads become highly asymmetric as the market maker accumulates inventory risk (vega).
 - Bid quotes tighten and ask quotes widen sharply for options that add to the existing portfolio vega.
+
+### Monte-Carlo Simulations (Module 6)
+A simulation engine generates 1,000 paths tracking the variance process (using Euler-Maruyama) and the portfolio vega, executing limit orders probabilistically based on the optimal quotes. The execution is blazingly fast: 1,000 paths evaluate in under ~0.4 seconds.
 
 ### Terminal Output Log
 ```text
 ========================================================
- MODULE 1 & 2: Option Pricing & Greeks (Heston Model)   
+ INITIALIZING MARKET MAKER ENGINE                       
 ========================================================
- K     T       Price     Vega      IV         Lambda
---------------------------------------------------------
- 8.0   1.0      2.06      0.41     0.1624    3150.00
- 9.0   1.0      1.22      0.91     0.1547    4447.06
-10.0   1.0      0.58      1.25     0.1467    7560.00
-11.0   1.0      0.22      1.05     0.1399    4447.06
-12.0   1.0      0.06      0.55     0.1337    3150.00
+Solving 3D HJB PDE (180x30x40 grid)...
+Solve completed in 0.066052 seconds.
+========================================================
+ EXTRACTING OPTIMAL QUOTES & WRITING TO CSV             
+========================================================
+Success: Data written to ../results/quotes_vs_Vpi.csv
+(Use this CSV to plot Figures 4-13 with Matplotlib)
+Success: Data written to ../results/value_function.csv
 
 ========================================================
- MODULE 3: Intensity & Hamiltonian Check                
+ RUNNING MONTE-CARLO SIMULATIONS                        
 ========================================================
-H(0) Check (Must be strictly positive): 1.554491
-
-========================================================
- MODULE 4: 3D HJB PDE Solver                            
-========================================================
-Grid Dimensions: 180 (time) x 30 (variance) x 40 (vega)
-Solving HJB equation... (This relies heavily on vector contiguous memory)
-Solve completed in 0.105 seconds.
-Peak Value Function at t=0, nu=0.0225, Vpi=0: 173185.10
-(Expected magnitude matches paper Figure 2 peak: ~130,000)
+  Simulation 100/1000  Simulation 200/1000  Simulation 300/1000  Simulation 400/1000  Simulation 500/1000  Simulation 600/1000  Simulation 700/1000  Simulation 800/1000  Simulation 900/1000  Simulation 1000/1000
+Simulations complete.
+Simulations completed in 0.430383 seconds.
+Success: Simulation data written to ../results/simulation_summary.csv
 ```
+
+Run `python plot_quotes.py` to generate the 13 charts into `results/plots/`.

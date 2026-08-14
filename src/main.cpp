@@ -105,6 +105,16 @@ int main() {
         cout << "Success: Data written to ../results/quotes_vs_Vpi.csv\n";
         cout << "(Use this CSV to plot Figures 4-13 with Matplotlib)\n";
         
+        ofstream csv2("../results/value_function.csv");
+        csv2 << "nu,Vpi,v\n";
+        for (int j = 0; j < grid.n_nu; ++j) {
+            for (int k = 0; k < grid.n_Vpi; ++k) {
+                csv2 << grid.nu(j) << "," << grid.Vpi(k) << "," 
+                     << solver.v(0, j, k) << "\n";
+            }
+        }
+        cout << "Success: Data written to ../results/value_function.csv\n";
+        
         cout << "\n========================================================\n";
         cout << " RUNNING MONTE-CARLO SIMULATIONS                        \n";
         cout << "========================================================\n";
