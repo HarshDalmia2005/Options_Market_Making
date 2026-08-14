@@ -3,36 +3,14 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-def run_backtest():
-    # 1. Load the Strategy "Brain" (Optimal Quotes)
-    quotes_path = "results/quotes_vs_Vpi.csv"
-    if not os.path.exists(quotes_path):
-        print(f"Error: {quotes_path} not found.")
+def run_backtest(data_path, option_brains):
+    print(f"\n==========================================")
+    print(f"Loading historical data from {data_path}...")
+    try:
+        df_market = pd.read_csv(data_path)
+    except FileNotFoundError:
+        print(f"Error: {data_path} not found.")
         return
-        
-    df_quotes = pd.read_csv(quotes_path)
-    
-    # Create interpolation functions for delta_bid and delta_ask for each option
-    # Since Vpi is the only state variable exported, we interpolate over it.
-    option_brains = {}
-    options_idx = df_quotes['option_idx'].unique()
-    for idx in options_idx:
-        df_opt = df_quotes[df_quotes['option_idx'] == idx].sort_values(by='Vpi')
-        vpi_vals = df_opt['Vpi'].values
-        bid_vals = df_opt['delta_bid'].values
-        ask_vals = df_opt['delta_ask'].values
-        
-        # Store data arrays for interpolation later
-        option_brains[idx] = {'vpi': vpi_vals, 'bid': bid_vals, 'ask': ask_vals}
-        
-    # 2. Load Historical Market Data
-    data_path = "data/binance_historical_data.csv"
-    if not os.path.exists(data_path):
-        print(f"Error: {data_path} not found. Run fetch_binance_data.py first.")
-        return
-        
-    print("Loading historical data...")
-    df_market = pd.read_csv(data_path)
     
     # 3. Initialize Portfolio State and Run Backtest
     Vpi = 0.0
@@ -93,7 +71,14 @@ def run_backtest():
     print(f"Final Portfolio Vega: {Vpi:.2f}")
     
     # 4. Plotting
-    plot_dir = "results/plots/backtest"
+    asset_symbol = "synthetic"
+    if "binance_" in data_path:
+        # extract symbol, e.g., 'data/binance_BTCUSDT.csv' -> 'BTCUSDT'
+        asset_symbol = data_path.split("binance_")[1].split(".csv")[0]
+        
+    dataset_name = asset_symbol.lower()
+    
+    plot_dir = f"results/plots/backtest/{dataset_name}"
     os.makedirs(plot_dir, exist_ok=True)
     
     plt.figure(figsize=(10, 6))
@@ -104,8 +89,7 @@ def run_backtest():
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.legend()
     
-    # Save depending on dataset used
-    dataset_name = "binance" if "binance" in data_path else "synthetic"
+
     pnl_plot_path = f"{plot_dir}/backtest_{dataset_name}_pnl.png"
     plt.savefig(pnl_plot_path, dpi=300)
     plt.close()
@@ -149,7 +133,7 @@ def run_backtest():
     plt.scatter(buys['time'], buys['trade_price'], color='green', marker='^', s=15, label="Market Buys (Hit our Ask)", alpha=0.7)
     plt.scatter(sells['time'], sells['trade_price'], color='red', marker='v', s=15, label="Market Sells (Hit our Bid)", alpha=0.7)
     
-    plt.title(f"Actual Market Order Flow ({dataset_name.upper()} - BTCUSDT)")
+    plt.title(f"Actual Market Order Flow ({asset_symbol})")
     plt.xlabel("Time (t)")
     plt.ylabel("Normalized Option Price")
     plt.grid(True, linestyle='--', alpha=0.5)
@@ -161,5 +145,34 @@ def run_backtest():
     
     print(f"Backtest charts saved to {plot_dir}")
 
+def main():
+    import glob
+    
+    # 1. Load C++ Model Quotes
+    quotes_path = "results/quotes_vs_Vpi.csv"
+    if not os.path.exists(quotes_path):
+        print(f"Error: {quotes_path} not found. Ensure C++ engine has been run.")
+        return
+        
+    df_quotes = pd.read_csv(quotes_path)
+    
+    option_brains = {}
+    options_idx = df_quotes['option_idx'].unique()
+    for idx in options_idx:
+        df_opt = df_quotes[df_quotes['option_idx'] == idx].sort_values(by='Vpi')
+        vpi_vals = df_opt['Vpi'].values
+        bid_vals = df_opt['delta_bid'].values
+        ask_vals = df_opt['delta_ask'].values
+        option_brains[idx] = {'vpi': vpi_vals, 'bid': bid_vals, 'ask': ask_vals}
+    
+    # Let's find all datasets
+    datasets = glob.glob("data/binance_*.csv")
+    if not datasets:
+        print("No binance datasets found in data/. Defaulting to synthetic.")
+        datasets = ["data/historical_data.csv"]
+        
+    for data_path in datasets:
+        run_backtest(data_path, option_brains)
+        
 if __name__ == "__main__":
-    run_backtest()
+    main()

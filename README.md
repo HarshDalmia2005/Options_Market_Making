@@ -152,10 +152,17 @@ The Python visualization script (`plot_quotes.py`) processes this data to genera
 ### Monte-Carlo Simulations (Module 6)
 A simulation engine generates 1,000 paths tracking the variance process (using Euler-Maruyama) and the portfolio vega, executing limit orders probabilistically based on the optimal quotes. The execution is blazingly fast: 1,000 paths evaluate in under ~0.4 seconds.
 
-### Real World Binance Backtest (Module 8)
-When the strategy was fed **713 actual BTCUSDT option trades** directly from Binance, the mathematical quotes were highly competitive, capturing the spread on **296 fills** (a ~41% win rate against aggressive taker flow). 
+### Multi-Asset Real World Binance Backtest (Module 8)
+When the strategy was fed live option trades directly from Binance across multiple different crypto assets, the mathematical quotes were highly competitive. By normalizing all assets down to the $S_0=10$ plane, the exact same limit order quoting algorithms worked securely across all markets without recompilation!
 
-By enforcing a realistic `MAX_ORDER_SIZE` limit (0.5 BTC) on fills, the strategy elegantly survived massive toxic block trades (where the model quoted negatively to shed inventory risk) and successfully captured a positive **Realized USD Profit of +$146.12** across a few minutes of real trading data. The portfolio vega risk rigorously obeyed the maximum cap thresholds imposed by the HJB penalty parameters.
+By enforcing a realistic `MAX_ORDER_SIZE` limit (0.5 contracts) on fills, the strategy elegantly survived massive toxic block trades (where the model quoted negatively to shed inventory risk) and successfully captured a positive **Realized USD Profit** across every single asset:
+
+- **BTCUSDT**: Captured 296 / 713 ticks (+ $146.51 Realized PnL)
+- **ETHUSDT**: Captured 427 / 783 ticks (+ $15.75 Realized PnL)
+- **BNBUSDT**: Captured 103 / 375 ticks (+ $16.03 Realized PnL)
+- **SOLUSDT**: Captured 156 / 480 ticks (+ $3.52 Realized PnL)
+
+The portfolio vega risk rigorously obeyed the maximum cap thresholds imposed by the HJB penalty parameters for all 4 markets.
 
 ### Terminal Output Log
 ```text
@@ -180,4 +187,4 @@ Success: Simulation data written to ../results/simulation_summary.csv
 Run `python plot_quotes.py` and `python historical_backtester.py` to generate the replication charts. The outputs are automatically organized into:
 - `results/plots/quotes/`: Optimal mid-to-bid, ask-to-mid, and value function 3D slices.
 - `results/plots/simulation/`: Monte-Carlo PnL histograms and risk distributions.
-- `results/plots/backtest/`: Historical tick-by-tick order flow, inventory progression, and realized profit charts.
+- `results/plots/backtest/<asset>/`: Historical tick-by-tick order flow, inventory progression, and realized profit charts categorized by asset (e.g. `btcusdt`, `ethusdt`).
