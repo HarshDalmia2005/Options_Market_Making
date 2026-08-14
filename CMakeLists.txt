@@ -11,6 +11,7 @@ add_executable(option_mm
     src/intensity.cpp
     src/hjb_solver.cpp
     src/optimal_quotes.cpp
+    src/simulation.cpp
 )
 
 target_include_directories(option_mm PRIVATE include/)

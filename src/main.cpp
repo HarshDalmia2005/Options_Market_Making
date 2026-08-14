@@ -3,6 +3,7 @@
 #include "intensity.hpp"
 #include "hjb_solver.hpp"
 #include "optimal_quotes.hpp"
+#include "simulation.hpp"
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -104,6 +105,30 @@ int main() {
         cout << "Success: Data written to ../results/quotes_vs_Vpi.csv\n";
         cout << "(Use this CSV to plot Figures 4-13 with Matplotlib)\n";
         
+        cout << "\n========================================================\n";
+        cout << " RUNNING MONTE-CARLO SIMULATIONS                        \n";
+        cout << "========================================================\n";
+        
+        Simulator simulator(heston, solver, quote_engine, options);
+        int n_sims = 1000;
+        int n_steps = 180;
+        
+        auto sim_start = chrono::high_resolution_clock::now();
+        auto sim_results = simulator.run(n_sims, n_steps, 42);
+        auto sim_end = chrono::high_resolution_clock::now();
+        
+        cout << "Simulations completed in " << chrono::duration<double>(sim_end - sim_start).count() << " seconds.\n";
+        
+        ofstream sim_csv("../results/simulation_summary.csv");
+        sim_csv << "sim_id,final_pnl,final_Vpi,total_trades\n";
+        for (int i = 0; i < n_sims; ++i) {
+            sim_csv << i << ","
+                    << sim_results[i].final_pnl << ","
+                    << sim_results[i].final_Vpi << ","
+                    << sim_results[i].total_trades << "\n";
+        }
+        cout << "Success: Simulation data written to ../results/simulation_summary.csv\n";
+
     } catch (const exception& e) {
         cerr << "Fatal Error: " << e.what() << "\n";
         return 1;
