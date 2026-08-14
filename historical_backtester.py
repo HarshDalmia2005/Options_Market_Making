@@ -26,9 +26,9 @@ def run_backtest():
         option_brains[idx] = {'vpi': vpi_vals, 'bid': bid_vals, 'ask': ask_vals}
         
     # 2. Load Historical Market Data
-    data_path = "data/historical_data.csv"
+    data_path = "data/binance_historical_data.csv"
     if not os.path.exists(data_path):
-        print(f"Error: {data_path} not found. Run generate_mock_market_data.py first.")
+        print(f"Error: {data_path} not found. Run fetch_binance_data.py first.")
         return
         
     print("Loading historical data...")
@@ -37,8 +37,10 @@ def run_backtest():
     # 3. Initialize Portfolio State and Run Backtest
     Vpi = 0.0
     pnl = 0.0
+    real_usd_pnl = 0.0
     trades_executed = 0
     pnl_history = []
+    real_pnl_history = []
     vpi_history = []
     times = []
     
@@ -61,25 +63,38 @@ def run_backtest():
         if trade_dir == -1 and trade_price <= our_bid_price:
             Vpi += z_i * vega_i
             pnl += z_i * delta_bid
+            if 'qty_actual' in row and 'S_spot' in row:
+                # Market makers don't post infinite size. We cap our fill at MAX_ORDER_SIZE
+                MAX_ORDER_SIZE = 0.5 # BTC
+                filled_qty = min(row['qty_actual'], MAX_ORDER_SIZE)
+                real_usd_pnl += filled_qty * (delta_bid * (row['S_spot'] / 10.0))
             trade_happened = True
         elif trade_dir == 1 and trade_price >= our_ask_price:
             Vpi -= z_i * vega_i
             pnl += z_i * delta_ask
+            if 'qty_actual' in row and 'S_spot' in row:
+                MAX_ORDER_SIZE = 0.5 # BTC
+                filled_qty = min(row['qty_actual'], MAX_ORDER_SIZE)
+                real_usd_pnl += filled_qty * (delta_ask * (row['S_spot'] / 10.0))
             trade_happened = True
             
         if trade_happened:
             trades_executed += 1
             
         pnl_history.append(pnl)
+        real_pnl_history.append(real_usd_pnl)
         vpi_history.append(Vpi)
         times.append(row['time'])
         
     print(f"Backtest completed! Executed {trades_executed} out of {len(df_market)} market ticks.")
-    print(f"Final Captured Spread PnL: {pnl:.2f}")
+    print(f"Final Captured Spread PnL (Normalized): {pnl:.2f}")
+    if 'qty_actual' in df_market.columns:
+        print(f"Final Realized Profit (Actual USD): ${real_usd_pnl:.2f}")
     print(f"Final Portfolio Vega: {Vpi:.2f}")
     
     # 4. Plotting
-    os.makedirs("results/plots", exist_ok=True)
+    plot_dir = "results/plots/backtest"
+    os.makedirs(plot_dir, exist_ok=True)
     
     plt.figure(figsize=(10, 6))
     plt.plot(times, pnl_history, label="Cumulative Captured Spread (PnL)", color='green')
@@ -88,8 +103,25 @@ def run_backtest():
     plt.ylabel("PnL")
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.legend()
-    plt.savefig("results/plots/backtest_pnl.png", dpi=300)
+    
+    # Save depending on dataset used
+    dataset_name = "binance" if "binance" in data_path else "synthetic"
+    pnl_plot_path = f"{plot_dir}/backtest_{dataset_name}_pnl.png"
+    plt.savefig(pnl_plot_path, dpi=300)
     plt.close()
+    
+    # Plot 1b: Real USD PnL
+    if 'qty_actual' in df_market.columns:
+        plt.figure(figsize=(10, 6))
+        plt.plot(times, real_pnl_history, label="Realized Profit (Actual USD)", color='purple')
+        plt.title("Historical Backtest: Real USD Profit (With Size Limits)")
+        plt.xlabel("Time (t)")
+        plt.ylabel("USD Profit ($)")
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.legend()
+        real_pnl_plot_path = f"{plot_dir}/backtest_{dataset_name}_real_pnl.png"
+        plt.savefig(real_pnl_plot_path, dpi=300)
+        plt.close()
     
     plt.figure(figsize=(10, 6))
     plt.plot(times, vpi_history, label=r"Portfolio Vega ($V^\pi$)", color='orange')
@@ -98,10 +130,36 @@ def run_backtest():
     plt.ylabel("Portfolio Vega")
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.legend()
-    plt.savefig("results/plots/backtest_vpi.png", dpi=300)
+    vpi_plot_path = f"{plot_dir}/backtest_{dataset_name}_vpi.png"
+    plt.savefig(vpi_plot_path, dpi=300)
     plt.close()
     
-    print("Backtest charts saved to results/plots/backtest_pnl.png and backtest_vpi.png")
+    # New Plot: Actual Market Data Received
+    plt.figure(figsize=(10, 6))
+    
+    # We need the times and mid prices from df_market
+    market_times = df_market['time']
+    mid_prices = df_market['mid_price']
+    
+    # Split trades by direction
+    buys = df_market[df_market['trade_dir'] == 1]
+    sells = df_market[df_market['trade_dir'] == -1]
+    
+    plt.plot(market_times, mid_prices, label="Market Mid Price (Normalized)", color='blue', alpha=0.5)
+    plt.scatter(buys['time'], buys['trade_price'], color='green', marker='^', s=15, label="Market Buys (Hit our Ask)", alpha=0.7)
+    plt.scatter(sells['time'], sells['trade_price'], color='red', marker='v', s=15, label="Market Sells (Hit our Bid)", alpha=0.7)
+    
+    plt.title(f"Actual Market Order Flow ({dataset_name.upper()} - BTCUSDT)")
+    plt.xlabel("Time (t)")
+    plt.ylabel("Normalized Option Price")
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend()
+    
+    market_plot_path = f"{plot_dir}/backtest_{dataset_name}_market.png"
+    plt.savefig(market_plot_path, dpi=300)
+    plt.close()
+    
+    print(f"Backtest charts saved to {plot_dir}")
 
 if __name__ == "__main__":
     run_backtest()

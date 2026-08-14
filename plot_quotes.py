@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 import os
 
 def main():
-    plot_dir = "results/plots"
-    os.makedirs(plot_dir, exist_ok=True)
+    plot_dir_quotes = "results/plots/quotes"
+    plot_dir_sim = "results/plots/simulation"
+    os.makedirs(plot_dir_quotes, exist_ok=True)
+    os.makedirs(plot_dir_sim, exist_ok=True)
     
     # Prefix for reading data
     prefix = "results/" if os.path.exists("results/") else "../results/"
@@ -31,7 +33,7 @@ def main():
             plt.ylabel("Value Function $v$")
             plt.legend()
             plt.grid(True, linestyle='--', alpha=0.5)
-            plt.savefig(os.path.join(plot_dir, "value_function.png"), dpi=300)
+            plt.savefig(os.path.join(plot_dir_quotes, "value_function.png"), dpi=300)
             plt.close()
     else:
         print(f"Warning: {val_path} not found.")
@@ -66,7 +68,7 @@ def main():
             plt.ylabel(r"$\delta^{i,b} / O^i$")
             plt.legend()
             plt.grid(True, linestyle='--', alpha=0.5)
-            plt.savefig(os.path.join(plot_dir, f"mid_to_bid_K_{K}.png"), dpi=300)
+            plt.savefig(os.path.join(plot_dir_quotes, f"mid_to_bid_K_{K}.png"), dpi=300)
             plt.close()
 
             # Bid IV / Initial IV
@@ -83,7 +85,7 @@ def main():
             plt.ylabel("Bid IV / Initial IV")
             plt.legend()
             plt.grid(True, linestyle='--', alpha=0.5)
-            plt.savefig(os.path.join(plot_dir, f"iv_ratio_K_{K}.png"), dpi=300)
+            plt.savefig(os.path.join(plot_dir_quotes, f"iv_ratio_K_{K}.png"), dpi=300)
             plt.close()
     else:
         print(f"Warning: {quotes_path} not found.")
@@ -103,7 +105,7 @@ def main():
         plt.xlabel("Final PnL")
         plt.ylabel("Frequency")
         plt.grid(True, linestyle='--', alpha=0.5)
-        plt.savefig(os.path.join(plot_dir, "pnl_histogram.png"), dpi=300)
+        plt.savefig(os.path.join(plot_dir_sim, "pnl_histogram.png"), dpi=300)
         plt.close()
         
         # PnL vs Final Vpi
@@ -114,12 +116,12 @@ def main():
         plt.xlabel(r"Final Portfolio Vega $V^\pi$")
         plt.ylabel("Final PnL")
         plt.grid(True, linestyle='--', alpha=0.5)
-        plt.savefig(os.path.join(plot_dir, "pnl_vs_vega.png"), dpi=300)
+        plt.savefig(os.path.join(plot_dir_sim, "pnl_vs_vega.png"), dpi=300)
         plt.close()
     else:
         print(f"Warning: {sim_path} not found.")
 
-    print(f"Success! All charts have been saved to the '{plot_dir}' directory.")
+    print(f"Success! All charts have been saved to the 'results/plots/' subdirectories.")
 
 if __name__ == "__main__":
     main()
